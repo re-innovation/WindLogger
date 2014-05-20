@@ -9,9 +9,11 @@ Please see: www.re-innovation.co.uk for more details.
 
 The items in this repository include:
 
-The PCB files were created in KiCAD PCB design software
+	The PCB files were created in KiCAD PCB design software
 
-Example code has been written for the Arduino IDE.
+	Example code has been written for the Arduino IDE.
+
+	The CAD design for fixings
 
 
 Overview of the design:
