@@ -75,9 +75,9 @@
   10/7/14  Adding additional Anemometer input - Matt Little
   10/7/14  Needs additional interrupt pin added - Matt Little
   13/8/14  Added wind direction data - Matt Little
+  15/8/14  Added 'I'm Alive' LED flash every 5 seconds - Matt Little
   
   TO DO
-  Sort out wind direction code - must take reading every second and average.
  
  //*********SD CARD DETAILS***************************	
  The SD card circuit:
@@ -206,6 +206,9 @@ volatile boolean writedataflag = HIGH;  // A flag to tell the code when to write
 int hiByte;      // These are used to store longer variables into EERPRPROM
 int loByte;
 
+// Varibles for 'I'm alive' flash
+int aliveFlashCounter = 0;  // This is used to count to give flash every 10 seconds
+
 // These next ints are for the filename conversion
 int day_int =0;      // To find the day from the Date for the filename
 int day_int1 =0;
@@ -291,7 +294,8 @@ void RTC()
 { 
   detachInterrupt(RTCinterrupt);
   dataCounter++;
-
+  aliveFlashCounter++;
+  
   if(writedataflag==LOW&&dataCounter>=sampleTime)  // This stops us loosing data if a second is missed
   { 
     // If this interrupt has happened then we want to write data to SD card:
@@ -443,6 +447,16 @@ void loop()
   // Want to measure the wind direction every second to give good direction analysis
   // This can be checked every second and an average used
   convertWindDirection(analogRead(directionPin));    // Run this every second. It increments the windDirectionArray 
+  
+  if(aliveFlashCounter>=10)
+  {
+    // Flash the LED every 10 seconds to show alive
+    pinMode(LEDred,OUTPUT);    // Set LED to be an output LED 
+    digitalWrite(LEDred, HIGH);   // set the LED ON
+    delay(1);
+    digitalWrite(LEDred, LOW);   // set the LED OFF 
+    aliveFlashCounter=0;  // Reset the counter  
+  }
   
   if(writedataflag==HIGH)
   {  
