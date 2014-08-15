@@ -1,19 +1,32 @@
 Here are the open-source files for a Wind Speed Logger.
+
 Based upon the DataDuino (an Arduino based SD card datalogger).
 
 
 The Wind Logger was designed by Matt Little of www.re-innovation.co.uk
 Contact: info@re-innovation.co.uk
 
-Please see: www.re-innovation.co.uk for more details.
+Please see: www.re-innovation.co.uk and search for 'wind datalogger' for more details.
 
-The items in this repository include:
-
+The folders in this repository include:
+	
+	WindLogger_PCB
 	The PCB files were created in KiCAD PCB design software
+	These are in Windlogger_PCB
+	There are the KICAD project files and the GERBER files for both the DataDuino and the Windlogger Shield	
 
+	WindLogger_Arduino
 	Example code has been written for the Arduino IDE.
+	This is for use with the Windlogger Shield.	
 
-	The CAD design for fixings
+	WindLogger_Fixings
+	The CAD design for fixings.
+	These is a work in progress.
+
+	WindLogger_DataProcessing
+	These are programs to take the data on the SD card and produce nice graphs with it.
+	This is a work in progress.
+
 
 
 Overview of the design:
@@ -31,8 +44,7 @@ Overview of the design:
   The file name is created from the reference number and the date in the format:
   RXXDXXXX.csv, where RXX is the reference number and DXXXX is the date in the format DDMM. 
   
-  Data is stored with human readable headers:
-  "Reference, Time, Date, Pulses, Temp1, Temp2, Temp3, Temp4, D7,D8,D9,A0,A1,A2,A3"
+  Data is stored with human readable headers. Check the Arduino code for these.
   
   You can adjust the parameters of the device using serial commands. These parameters are stored in EEPROM.
   These are:
@@ -50,4 +62,5 @@ Overview of the design:
 
 Modified:
 10/5/14	GitHub Repository created - Matt Little
+15/8/14	Updated files with improvements made - Matt Little
  

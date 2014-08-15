@@ -19,9 +19,11 @@
   Pin D3 is set up to cound pulses from a sensor (such as a anemometer or flow sensor)
   These are pulses are averaged into a wind speed
   
-  Pin A0 is set up to read a thermistor for temperature
+  Pin A0 is set up to read a thermistor for temperature (GND-47k thermistor - 47k -Vref)
   
   Pin A1 is set up with a 47k/47k potential divider from the input voltage
+  
+  Pin A2 is set up ro measure wind direction with a 10k resistor to GND (GND-10k-R vane-Vref)
   
   Pin D4 is set up to switch on the power to some IR sensors (for wind direction)
   
@@ -51,6 +53,11 @@
   S?????E
   This will change the sample period to ????? seconds. Set to 00001 for 1 second data, set to 03600 for 1 hour data.
   The minimum is 1 second data. The maximum is 99999 seconds
+  
+  // Addedd Interrupt code from here:
+  // PinChangeIntExample, version 1.1 Sun Jan 15 06:24:19 CST 2012
+  // See the Wiki at http://code.google.com/p/arduino-pinchangeint/wiki 
+  // for more information.
  
   Updates: 
   30/10/12 Code written - Matt Little
@@ -61,6 +68,16 @@
   5/2/14   Adding HIH humidity/temperature sensor - Matt Little
   5/2/14   Sorting out Card Detect when card removed - Matt Little
   10/2/14  Sorting out card re-enter issue - Matt Little
+  17/6/14  Adding pull-up enable for calibrate pin.- Matt Little
+  17/6/14  Removing humidity sensor routines. Not needed -  Matt Little
+  17/6/14  Adding debounce timer for anemometer pulses - Matt Little
+  17/6/14  Adding Direction vane input - Matt Little
+  10/7/14  Adding additional Anemometer input - Matt Little
+  10/7/14  Needs additional interrupt pin added - Matt Little
+  13/8/14  Added wind direction data - Matt Little
+  
+  TO DO
+  Sort out wind direction code - must take reading every second and average.
  
  //*********SD CARD DETAILS***************************	
  The SD card circuit:
@@ -96,7 +113,7 @@
 #include <avr/eeprom.h>
 #include <avr/sleep.h>
 #include <avr/power.h>
-#include <HIH61XX.h>      // For the humidity sensor
+#include <PinChangeInt.h>  // For additional interrupts
 
 /************User variables and hardware allocation**********************************************/
 
@@ -110,9 +127,6 @@ int cardDetectOld = LOW;  // This is the flag for the old reading of the card de
 SdFat sd;
 //Log file
 SdFile datafile;  
-//SdFile root;
-
-//const uint8_t spiSpeed = SPI_HALF_SPEED;
 
 //File datafile;   // The logging file
 String dataString;    // This is the holder for the data as a string. Start as blank
@@ -127,23 +141,22 @@ Rtc_Pcf8563 rtc;
 
 /************* Pulse counter *******/
 #define pulseInterrupt 1  // Pulse Counter Interrupt - This is pin 3 of arduino - which is INT1
-#define pulsePin 3  //   This is digital pin the pulse is attached to
+#define ANEMOMETER1 3  //   This is digital pin the pulse is attached to
+#define ANEMOMETER2 4  //   This is digital pin the pulse is attached to
+
 
 /********* I/O Pins *************/
 #define LEDred 5      // The output led is on pin 5
 #define calibrate 7   // This controls if we are in serial calibrate mode or not
 #define batteryPin A1  // For monitoring the battery voltage
-#define HIHpower 8    // Power for HIH sensor is on pin 8
+#define directionPin A2  // For monitoring the wind direction
 
-///********* Humidity Sensor Variables****************/
-//  Create an HIH61XX with I2C address 0x27, powered by pin 8
-// The pin 8 power does not matter in this example - (Future addition?)
-HIH61XX hih(0x27, HIHpower);
-char TempHIHStr[6];      // A string buffer to hold the converted string
-char HumidityHIHStr[8];  // A string buffer to hold the converted string
+/********** Wind Direction Storage *************/
+String WindDirection = " ";  // Empty to start with
+int windDirectionArray[] = {0,0,0,0,0,0,0,0};  //Holds the frequency of the wind direction
 
 /********** Thermistor Data Storage ************/
-#define thermistor 0  // This is the analog pin for the thermistor
+#define thermistor A0  // This is the analog pin for the thermistor
 float TempC = 0;  // This holds the converted value of temperature
 char TempCStr[6];  // A string buffer to hold the converted string
 
@@ -181,8 +194,11 @@ long sampleTime = 2;  // This is the time between samples for the DAQ
                       // Sample time is stored in EEPROM in locations 2 & 3
 
 // Variables for the Pulse Counter
-volatile long pulseCounter = 0;  // This counts pulses from the flow sensor  - Needs to be long to hold number
-volatile long pulseCounterOld = 0;  // This is storage for the old flow sensor - Needs to be long to hold number
+volatile long pulseCounter1 = 0;  // This counts pulses from the flow sensor  - Needs to be long to hold number
+volatile long pulseCounter1Old = 0;  // This is storage for the old flow sensor - Needs to be long to hold number
+
+volatile long pulseCounter2 = 0;  // This counts pulses from the flow sensor  - Needs to be long to hold number
+volatile long pulseCounter2Old = 0;  // This is storage for the old flow sensor - Needs to be long to hold number
 
 volatile boolean writedataflag = HIGH;  // A flag to tell the code when to write data
 
@@ -212,7 +228,7 @@ String newdate;     // The new date, read every time
 
 // These are Char Strings - they are stored in program memory to save space in data memory
 // These are a mixutre of error messages and serial printed information
-const char headers[] PROGMEM = "Reference, Date, Time, Wind Pulses, Direction, Temperature, Humidity, Thermistor, Battery Voltage";  // Headers for the top of the file
+const char headers[] PROGMEM = "Reference, Date, Time, Wind1, Wind2, Direction, Thermistor, Battery Voltage";  // Headers for the top of the file
 const char headersOK[] PROGMEM = "Headers OK";
 const char erroropen[] PROGMEM = "Error opening file";
 const char error[] PROGMEM = "ERROR ERROR ERROR";
@@ -225,20 +241,39 @@ const char noSD[] PROGMEM = "No SD card present";
 char stringBuffer[MAX_STRING];  // A buffer to hold the string when pulled from program memory
 
 /***************************************************
- *  Name:        pulse
+ *  Name:        pulse1
  *
  *  Returns:     Nothing.
  *
  *  Parameters:  None.
  *
- *  Description: Count pulses from Anamometer
+ *  Description: Count pulses from Anemometer 1
  *
  ***************************************************/
-void pulse(void)
+void pulse1(void)
 {
   // If the anemometer has spun around
   // Increment the pulse counter
-  pulseCounter++;
+  pulseCounter1++;
+  // ***TO DO**** Might need to debounce this
+}
+
+/***************************************************
+ *  Name:        pulse2
+ *
+ *  Returns:     Nothing.
+ *
+ *  Parameters:  None.
+ *
+ *  Description: Count pulses from Anemometer 2
+ *
+ ***************************************************/
+void pulse2(void)
+{
+  // If the anemometer has spun around
+  // Increment the pulse counter
+  pulseCounter2++;
+  // ***TO DO**** Might need to debounce this
 }
 
 /***************************************************
@@ -254,17 +289,18 @@ void pulse(void)
  ***************************************************/
 void RTC()
 { 
-  
   detachInterrupt(RTCinterrupt);
   dataCounter++;
-  
+
   if(writedataflag==LOW&&dataCounter>=sampleTime)  // This stops us loosing data if a second is missed
   { 
     // If this interrupt has happened then we want to write data to SD card:
     // Save the pulsecounter value (this will be stored to write to SD card
-    pulseCounterOld = pulseCounter;
-    // Reset the pulse counter
-    pulseCounter = 0;
+    pulseCounter1Old = pulseCounter1;
+    pulseCounter2Old = pulseCounter2;
+   // Reset the pulse counter
+    pulseCounter1 = 0;
+    pulseCounter2 = 0;
     // Reset the DataCounter
     dataCounter = 0;  
     // Set the writedataflag HIGH
@@ -343,35 +379,25 @@ void setup()
   pinMode(2,INPUT);    // Set D2 to be an input for the RTC CLK-OUT   
   //initialise the real time clock
   Rtc_Pcf8563 rtc; 
- 
-  /* Setup the pin direction. */
-  pinMode(pulsePin, INPUT);
 
   //initialisetemp();  // Initialise the temperature sensors
   pinMode(LEDred,OUTPUT);    // Set D5 to be an output LED
   pinMode(cardDetect,INPUT);  // D6 is the SD card detect on pin 6.
  
   //Set up digital data lines
-  pinMode(calibrate,INPUT);
+  pinMode(calibrate,INPUT_PULLUP);
  
   // Battery voltage sensing
   pinMode(batteryPin,INPUT);
   
-    // Power for the HIH humidity sensor
-  pinMode(HIHpower,OUTPUT);
+   //Set up direction input for wind vane
+  pinMode(directionPin,INPUT); 
   
-  // Put unused pins to INPUT to try and save power...
-  pinMode(4,INPUT);    
+  // Put unused pins to INPUT to try and save power...   
   pinMode(9,INPUT);    
-  pinMode(A2,INPUT);
   pinMode(A3,INPUT); 
   
   setupRTC();  // Initialise the real time clock  
-
-  digitalWrite(HIHpower, HIGH);  // Power up the unit  
-  //  start the Humidity and temp sensor
-  hih.start();   
-  digitalWrite(HIHpower, LOW);  // Power up the unit
   
   initialiseSD();    // Inisitalise the SD card   
   createfilename();  // Create the corrct filename (from date)
@@ -386,11 +412,17 @@ void setup()
   sampleTime = (hiByte << 8)+loByte;  // Get the sensor calibrate value 
   
   analogReference(EXTERNAL);  // This should be default, but just to be sure
-   
-  //Serial.println("Initialisation complete.");
- 
-  attachInterrupt(pulseInterrupt, pulse, FALLING); 
+
+  // Interrupt for the 1Hz signal from the RTC
   attachInterrupt(RTCinterrupt, RTC, RISING); 
+  // Attach interrupts for the pulse counting
+  pinMode(ANEMOMETER1, INPUT); 
+  digitalWrite(ANEMOMETER1, HIGH);
+  PCintPort::attachInterrupt(ANEMOMETER1, &pulse1, FALLING);  // add more attachInterrupt code as required
+  pinMode(ANEMOMETER2, INPUT); 
+  digitalWrite(ANEMOMETER2, HIGH);
+  PCintPort::attachInterrupt(ANEMOMETER2, &pulse2, FALLING);  
+ 
 }
 
 
@@ -406,6 +438,12 @@ void setup()
  ***************************************************/
 void loop()
 {
+
+  // *********** WIND DIRECTION **************************************  
+  // Want to measure the wind direction every second to give good direction analysis
+  // This can be checked every second and an average used
+  convertWindDirection(analogRead(directionPin));    // Run this every second. It increments the windDirectionArray 
+  
   if(writedataflag==HIGH)
   {  
     pinMode(LEDred,OUTPUT);    // Set LED to be an output LED 
@@ -421,8 +459,12 @@ void loop()
     
     // *********** WIND DIRECTION **************************************
     // This can be checked every second and an average used
-    // TO DO!!!
-    // Need a good design for a wind vane
+    WindDirection = analyseWindDirection();
+    for(int i=0;i<8;i++)
+    {
+      //Resets the wind direction array
+      windDirectionArray[i]=0;
+    }
  
     // *********** TEMPERATURE *****************************************
     // Two versions of this - either with thermistor or I2C sensor (if connected)
@@ -435,21 +477,7 @@ void loop()
     {
       Serial.print("Therm: ");
       Serial.println(TempCStr);  
-    }
-    
-    // *********** HUMIDITY (& Temperature *******************************
-    // I2C Sensor - Using MOD1014 from Embedded Adventures
-    // Based upon Honeywell HIH-6130 unit
-    // Power is provided via D8 pin (saves power when not in use
-    pinMode(HIHpower,OUTPUT);
-    digitalWrite(HIHpower, HIGH);  // Power up the unit
-    
-    hih.update(); 
-    dtostrf(hih.temperature(),2,2,TempHIHStr);
-    dtostrf(hih.humidity(),2,5,HumidityHIHStr); 
-    
-    digitalWrite(HIHpower, LOW);  // Power down the unit    
-    pinMode(HIHpower,INPUT);    
+    }   
 
     // *********** BATTERY VOLTAGE ***************************************
     // From Vcc-47k--47k-GND potential divider
@@ -476,17 +504,15 @@ void loop()
     dataString += comma;
     dataString += String(rtc.formatTime()); // Time
     dataString += comma;
-    dataString += String(pulseCounterOld); // Wind pulses
+    dataString += String(pulseCounter1Old); // Wind pulses 1
     dataString += comma;
-    dataString += "D"; // Wind direction
+    dataString += String(pulseCounter2Old); // Wind pulses 2
     dataString += comma;
-    dataString += TempHIHStr;  // Temperature (Honeywell I2C)
-    dataString += comma;
-    dataString += HumidityHIHStr;  // Humidity (Honeywell I2C)
+    dataString += WindDirection; // Wind direction
     dataString += comma;
     dataString += TempCStr;  // Temperature (Thermistor)
     dataString += comma;
-    dataString += BatteryVoltStr;  // Temperature  
+    dataString += BatteryVoltStr;  // Battery voltage  
     
     // ************** Write it to the SD card *************
     // This depends upon the card detect.
@@ -537,8 +563,10 @@ void loop()
   if(debugFlag==HIGH)
   {
     // DEBUGGING ONLY........
-    Serial.print("Pulses: ");
-    Serial.println(pulseCounter, DEC);
+    Serial.print("Anemometer1: ");
+    Serial.println(pulseCounter1, DEC);
+    Serial.print("Anemometer2: ");
+    Serial.println(pulseCounter2, DEC);
   }
   
   // A Switch on D7 will set if the unit is in serial adjust mode or not  
@@ -553,7 +581,17 @@ void loop()
     Serial.flush();    // Force out the end of the serial data
   
     // Reset all the data collection values
-    pulseCounter = 0;
+    WindDirection = analyseWindDirection();
+    Serial.print("Vane Direction:");
+    Serial.println(WindDirection);
+    
+    for(int i=0;i<8;i++)
+    {
+      //Resets the wind direction array
+      windDirectionArray[i]=0;
+    }
+    pulseCounter1 = 0;
+    pulseCounter2 = 0;
     dataCounter = 0;  
     writedataflag=LOW;
   }
@@ -637,7 +675,6 @@ void initialiseSD()
     }
   }
 }
-
 
 // *********FUNCTION TO SORT OUT THE FILENAME**************
 void createfilename()
@@ -858,5 +895,110 @@ void getData()
         str_buffer="";  // Reset the buffer to be filled again 
       }
     }
+  }
+}
+
+
+// ******** CALC DIRECTION *********
+// This routine takes in an analog read value and converts it into a wind direction
+// The Wind vane uses a series of resistors to show what direction the wind comes from
+// The different values are:
+//    R1 = 33k  => 238 N
+//    R2 = 8.2k => 562 NE
+//    R3 = 1k => 930 E
+//    R4 = 2.2k => 839 SE
+//    R5 = 3.9k => 736 S
+//    R6 = 16k => 394 SW
+//    R7 = 120k => 79 W
+//    R8 = 64.9k => 137 NW
+// This means we can 'band' the data into 8 bands
+
+void convertWindDirection(int reading)
+{
+  // The reading has come from the ADC
+  if(reading>0&&reading<100)
+  {
+    windDirectionArray[6]++;
+  }
+  else if(reading>100&&reading<200)
+  {
+    windDirectionArray[7]++;
+  }
+  else if(reading>200&&reading<350)
+  {
+    windDirectionArray[0]++; 
+  }
+  else if(reading>350&&reading<450)
+  {
+    windDirectionArray[5]++;
+  }  
+  else if(reading>450&&reading<650)
+  {
+    windDirectionArray[1]++;
+  }  
+  else if(reading>650&&reading<800)
+  {
+    windDirectionArray[4]++;
+  }
+  else if(reading>800&&reading<900)
+  {
+    windDirectionArray[3]++;
+  }
+  else if(reading>900&&reading<1024)
+  {
+    windDirectionArray[2]++;
+  }
+  else
+  {
+      // This is an error reading
+  }
+}
+
+String analyseWindDirection()
+{
+  // When a data sample period is over we need to see the most frequent wind direction.
+  // This needs to be converted back to a direction and stored on SD
+  
+  int data1 = windDirectionArray[0];
+  int maxIndex = 0;
+  // First need to find the maximum integer int he array
+  for(int i=1;i<8;i++)
+  {
+    if(data1<windDirectionArray[i])
+    {
+      data1=windDirectionArray[i];
+      maxIndex = i;
+    }
+  }
+  // Serial.println(maxIndex);  Testing
+    
+  
+  // Then convert that into the direction
+  switch(maxIndex)
+  {
+    case 0:
+      return("N");
+    break;
+    case 1:
+      return("NE");
+    break;    
+    case 2:
+      return("E");
+    break;  
+    case 3:
+      return("SE");
+    break;
+    case 4:
+      return("S");
+    break;  
+    case 5:
+      return("SW");
+    break;
+    case 6:
+      return("W");
+    break;
+    case 7:
+      return("NW");
+    break;
   }
 }
