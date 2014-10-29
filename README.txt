@@ -20,13 +20,15 @@ The folders in this repository include:
 	This is for use with the Windlogger Shield.	
 
 	WindLogger_Fixings
-	The CAD design for fixings.
+	The CAD design for fixing system for an anemometer and a wind vane.
 	These is a work in progress.
 
 	WindLogger_DataProcessing
 	These are programs to take the data on the SD card and produce nice graphs with it.
 	This is a work in progress.
 
+	WindLogger_Instructions
+	These are the instructions in a number of formats and languages.
 
 
 Overview of the design:
