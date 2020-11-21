@@ -1,3 +1,4 @@
+# Low Cost Data Logger for Wind Speed Parameters
 This repository has the open-source files for a Data Logger for Wind Speed and other small wind turbine parameters.
 
 So far there have been two different versions of this unit:
@@ -8,6 +9,8 @@ The Wind Logger was originally designed by Matt Little of www.re-innovation.co.u
 Contact: info@re-innovation.co.uk
 
 Please see: www.re-innovation.co.uk and search for 'wind datalogger' for more details.
+
+Some more details are available here:
 https://www.re-innovation.co.uk/docs/wind-datalogger/
 
 The folders in this repository include:
