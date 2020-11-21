@@ -1,0 +1,136 @@
+Cmp-Mod V01 Created by CvPcb (2013-07-07 BZR 4022)-stable date = 15/07/2014 17:53:19
+
+BeginCmp
+TimeStamp = /53BEB323;
+Reference = C1;
+ValeurCmp = 100uf;
+IdModule  = C2V8_large_pad;
+EndCmp
+
+BeginCmp
+TimeStamp = /4F85979E;
+Reference = C2;
+ValeurCmp = C;
+IdModule  = C1_wide_lg_pad_2;
+EndCmp
+
+BeginCmp
+TimeStamp = /53BEB1FB;
+Reference = C3;
+ValeurCmp = C;
+IdModule  = C1_wide_lg_pad_2;
+EndCmp
+
+BeginCmp
+TimeStamp = /4F8597B7;
+Reference = D1;
+ValeurCmp = DATA;
+IdModule  = LED-5MM_larg_pad;
+EndCmp
+
+BeginCmp
+TimeStamp = /53BEA9F6;
+Reference = P1;
+ValeurCmp = BATT;
+IdModule  = SIL-2_screw_terminal;
+EndCmp
+
+BeginCmp
+TimeStamp = /53BEAA23;
+Reference = P2;
+ValeurCmp = DIR;
+IdModule  = SIL-2_screw_terminal;
+EndCmp
+
+BeginCmp
+TimeStamp = /53BEAA14;
+Reference = P3;
+ValeurCmp = WIND2;
+IdModule  = SIL-2_screw_terminal;
+EndCmp
+
+BeginCmp
+TimeStamp = /53BEAA05;
+Reference = P4;
+ValeurCmp = WIND1;
+IdModule  = SIL-2_screw_terminal;
+EndCmp
+
+BeginCmp
+TimeStamp = /4F8595A5;
+Reference = R1;
+ValeurCmp = 10k;
+IdModule  = R3-LARGE_PADS_0_8_hole;
+EndCmp
+
+BeginCmp
+TimeStamp = /4F859DAB;
+Reference = R2;
+ValeurCmp = 47k;
+IdModule  = R3-LARGE_PADS_0_8_hole;
+EndCmp
+
+BeginCmp
+TimeStamp = /4F859DA5;
+Reference = R3;
+ValeurCmp = 47k;
+IdModule  = R3-LARGE_PADS_0_8_hole;
+EndCmp
+
+BeginCmp
+TimeStamp = /4F85A777;
+Reference = R4;
+ValeurCmp = 47k;
+IdModule  = R3-LARGE_PADS_0_8_hole;
+EndCmp
+
+BeginCmp
+TimeStamp = /4F85A7C7;
+Reference = R5;
+ValeurCmp = Therm 47k;
+IdModule  = R3-LARGE_PADS_0_8_hole;
+EndCmp
+
+BeginCmp
+TimeStamp = /4F8597AB;
+Reference = R6;
+ValeurCmp = 1k;
+IdModule  = R3-LARGE_PADS_0_8_hole;
+EndCmp
+
+BeginCmp
+TimeStamp = /53C55BFF;
+Reference = R7;
+ValeurCmp = R;
+IdModule  = R3-LARGE_PADS_0_8_hole;
+EndCmp
+
+BeginCmp
+TimeStamp = /53C55C0E;
+Reference = R8;
+ValeurCmp = R;
+IdModule  = R3-LARGE_PADS_0_8_hole;
+EndCmp
+
+BeginCmp
+TimeStamp = /500E6E21;
+Reference = SHIELD1;
+ValeurCmp = ARDUINO_SHIELD;
+IdModule  = ARDUINO_SHIELD_040pins_no_hole_small;
+EndCmp
+
+BeginCmp
+TimeStamp = /53BEAF7F;
+Reference = SW1;
+ValeurCmp = POWER;
+IdModule  = SW_SPDT_rapid_783760;
+EndCmp
+
+BeginCmp
+TimeStamp = /53BEAF66;
+Reference = SW2;
+ValeurCmp = CALIBRATE;
+IdModule  = SW_SPDT_rapid_783760;
+EndCmp
+
+EndListe
