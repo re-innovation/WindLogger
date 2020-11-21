@@ -29,12 +29,12 @@ These is a work in progress. Originally draw using CorelDraw - I hope to update/
 * WindLogger_INSTRUCTIONS
 These are the instructions in a number of formats and languages.
 
-## Version 1
+## Version 1 - 2014
 Overview of the design:
-  A PCF8563 Realt Time Clock is used to timestamp the data.
-  
+  A PCF8563 Real Time Clock is used to timestamp the data.
+
   Pin D3 is set up to cound pulses from a sensor (such as a anemometer or flow sensor)
-  
+ 
   Pins D7,D8,D9 are set up to record digital information (0 or 1)
   
   Pins A0 to A3 are set up to record analogue information (0 to 1024)
@@ -52,29 +52,22 @@ Overview of the design:
   Data is stored with human readable headers. Check the Arduino code for these.
   
   You can adjust the parameters of the device using serial commands. These parameters are stored in EEPROM.
-  
   These are:
-  
-  R??E
-  
-  This will change the reference number to ??
-  
-  T??????E
-  
-  This will change the time to HHMMSS
-  
-  D??????E
-  
-  This will change the date to DDMMYY
-  
-  S?????E
-  
-  This will change the sample period to ????? seconds. Set to 00001 for 1 second data, set to 03600 for 1 hour data.
-  
-  The minimum is 1 second data. The maximum is 99999 seconds
+  * R??E - This will change the reference number to ??
+  * T??????E - This will change the time to HHMMSS
+  * D??????E - This will change the date to DDMMYY
+  * S?????E - This will change the sample period to ????? seconds. Set to 00001 for 1 second data, set to 03600 for 1 hour data. (The minimum is 1 second data. The maximum is 99999 seconds)
 
-## Version 3
+## Version 3 - 2016
  
+This newer version mainly covers a new circuit board which was designed as a surface mount design. The Code on this board has additional changes, but not too different functionality.
+
+## Version 4 - 2020
+
+This is work in progress. I'm trying to create a better PCB design which will also have WiFi and GPRS/2G connectivity for your data.
+
+The wind speed logging unit is a plug in board onto a data-logging main unit.
+
 
 ##  Data Processing
 These are programs to take the data on the SD card and produce nice graphs with it.
