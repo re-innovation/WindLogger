@@ -1,4 +1,5 @@
 This repository has the open-source files for a Data Logger for Wind Speed and other small wind turbine parameters.
+
 So far there have been two different versions of this unit:
 *Version 1 was released in 2014. This was basic add on dhield for the 'DataDuino' (an Arduino based SD card datalogger) from re-innovation.
 *Version 2 was released on 2016. This was a surface mount design with additional functions such as solar PV charging.
@@ -27,7 +28,6 @@ These is a work in progress. Originally draw using CorelDraw
 *WindLogger_INSTRUCTIONS
 These are the instructions in a number of formats and languages.
 
-
 # Version 1
 Overview of the design:
   A PCF8563 Realt Time Clock is used to timestamp the data.
@@ -55,10 +55,9 @@ Overview of the design:
  # Version 3
  
 
-## WindLogger_DataProcessing
+#  Data Processing
 These are programs to take the data on the SD card and produce nice graphs with it.
 This is a work in progress.
-
-https://github.com/re-innovation/CSVviewer[https://github.com/re-innovation/CSVviewer]
+https://github.com/re-innovation/CSVviewer
 
  
