@@ -1,12 +1,13 @@
-Here are the open-source files for a Wind Speed Logger.
+This repository has the open-source files for a Data Logger for Wind Speed and other small wind turbine parameters.
+So far there have been two different versions of this unit:
+*Version 1 was released in 2014. This was basic add on dhield for the 'DataDuino' (an Arduino based SD card datalogger) from re-innovation.
+*Version 2 was released on 2016. This was a surface mount design with additional functions such as solar PV charging.
 
-Based upon the DataDuino (an Arduino based SD card datalogger).
-
-
-The Wind Logger was designed by Matt Little of www.re-innovation.co.uk
+The Wind Logger was originally designed by Matt Little of www.re-innovation.co.uk
 Contact: info@re-innovation.co.uk
 
 Please see: www.re-innovation.co.uk and search for 'wind datalogger' for more details.
+https://www.re-innovation.co.uk/docs/wind-datalogger/
 
 The folders in this repository include:
 	
@@ -15,11 +16,11 @@ The folders in this repository include:
 	These are in Windlogger_PCB
 	There are the KICAD project files and the GERBER files for both the DataDuino and the Windlogger Shield	
 
-	WindLogger_Arduino
+	WindLogger_FIRMWARE
 	Example code has been written for the Arduino IDE.
 	This is for use with the Windlogger Shield.	
 
-	WindLogger_Fixings
+	WindLogger_FIXINGS
 	The CAD design for fixing system for an anemometer and a wind vane.
 	These is a work in progress.
 
